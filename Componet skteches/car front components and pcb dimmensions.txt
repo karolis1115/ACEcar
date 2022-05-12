@@ -1,0 +1,38 @@
+Front components:
+	Camera:
+		Dimmensions:
+			x:24.92 mm
+			y:24.21 mm
+		Thickness:
+			PCB:1.00 mm
+			PCB + Connector:3.57 mm
+			PCB + camera:5.85
+
+	Ultrasonic sensor:
+		dimmensions:
+			x:45.50 mm
+			y:20.41 mm
+		Thickness:
+			PCB:1.20 mm
+			PCB + sensor:13.55 mm
+
+	8X IR sensor:
+		dimmensions:
+			x:66.05 mm
+			y:16.02 mm
+		Thickness:
+			PCB:1.80 mm
+			PCB + sensor:3.23 mm
+
+
+
+
+Main PCB:
+	Dimmensions:
+		x:92.583mm
+		y:66.675mm
+	Thickness:
+		pcb:depends (might be 1.60 mm)
+		everything: +-25mm (probably best to have atleast +5 mm clearance)
+		
+	

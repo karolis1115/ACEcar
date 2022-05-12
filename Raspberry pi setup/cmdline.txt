@@ -1,0 +1,1 @@
+console=serial0,115200 console=tty1 root=PARTUUID=1552dd1e-02 rootfstype=ext4 fsck.repair=yes rootwait modules-load=dwc2,g_ether
