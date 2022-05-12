@@ -10,8 +10,15 @@ sudo apt-get install -y git cmake
 sudo apt install libjpeg9-dev
 git clone https://github.com/jacksonliam/mjpg-streamer.git
 cd mjpg-streamer-experimental
+
+MAKE CHANGES ON CONFIG USING THIS PULL REQUEST (as of 2022-05-12 pull request not merged)
+https://github.com/jacksonliam/mjpg-streamer/pull/350/commits/8895ed4f825846fd27c468fbe2139bf69e09d684
 make
 sudo make install
+
+
+mjpg_streamer -i "input_uvc.so" (to use usb camera)
+mjpg_streamer -i "input_raspicam.so" (to use raspi camera)
 
 
 ##############Increase swap size######################################################################
@@ -92,4 +99,7 @@ https://gpiozero.readthedocs.io/en/stable/remote_gpio.html(More info)
 ####################SOURCES##################
 
 https://linuxize.com/post/how-to-install-opencv-on-debian-10/
+
+https://abyz.me.uk/rpi/pigpio/python.html#pigpio.pi (More info)
+https://gpiozero.readthedocs.io/en/stable/remote_gpio.html(More info)
 
