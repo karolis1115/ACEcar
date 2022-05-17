@@ -18,6 +18,14 @@ pi.set_mode(drivePWM, pigpio.OUTPUT)
 
 ########################MAIN##############################
 
+def record():
+    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
+    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+    out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (640,480))
+    while(True):
+        ret, frame = cap.read()
+        out.write(frame)
+
 def video():
     cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
     while True:
@@ -36,12 +44,12 @@ def video():
 def control():
     while True: 
         if keyboard.is_pressed('w'):
-            pi.set_PWM_dutycycle(driveDirrection,128)
+            pi.set_PWM_dutycycle(driveDirrection,200)
             pi.write(drivePWM,0)
     
         elif keyboard.is_pressed('s'):
             pi.write(driveDirrection,0)
-            pi.set_PWM_dutycycle(drivePWM,128)
+            pi.set_PWM_dutycycle(drivePWM,200)
 
 
         elif keyboard.is_pressed('a'):
@@ -58,8 +66,10 @@ def control():
 
 tcontrol = threading.Thread(target=control)
 tvideo = threading.Thread(target=video)
-tvideo.start()
+trecord = threading.Thread(target=record)
+#tvideo.start()
 tcontrol.start()
+#trecord.start()
 
 '''
 Take video data -> detect line + obstacles + end -> follow line + avoid obstacles + stop at end
