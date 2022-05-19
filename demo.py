@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-
+#HELLO EVERYONE
 cap = cv2.VideoCapture('vid1.mp4')
 cap.set(3, 160)
 cap.set(4, 120)
