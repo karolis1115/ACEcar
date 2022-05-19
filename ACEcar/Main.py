@@ -18,14 +18,6 @@ pi.set_mode(drivePWM, pigpio.OUTPUT)
 
 ########################MAIN##############################
 
-def record():
-    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (640,480))
-    while(True):
-        ret, frame = cap.read()
-        out.write(frame)
-
 def video():
     cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
     while True:
