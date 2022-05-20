@@ -56,13 +56,64 @@ def control():
             pi.write(driveDirrection,0)
             pi.write(drivePWM,0)
 
-tcontrol = threading.Thread(target=control)
-tvideo = threading.Thread(target=video)
-trecord = threading.Thread(target=record)
+
+def main():
+    while True:
+
+        #Drive forward
+        pi.set_PWM_dutycycle(driveDirrection,200)
+        pi.write(drivePWM,0)
+
+        ret, frame = cap.read()
+
+        low_b = np.uint8([255, 255, 255])  # color of background
+
+        high_b = np.uint8([80, 80, 150])
+        mask = cv2.inRange(frame, high_b, low_b)
+
+        contours, hierarchy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
+        if len(contours) > 0:
+            c = max(contours, key=cv2.contourArea)
+            M = cv2.moments(c)
+            if M["m00"] != 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                print("CX: " + str(cx) + " CY:" + str(cy))
+                if cx >= 1200:
+                    print("Turn Left")
+                    pi.set_servo_pulsewidth(steerPWM, 1200) #turn wheels left (probs needs adjusting)
+
+                if cx < 1200 and cx > 1000:  # NEED TO CHANGE VALUES DEPENDS OF CAMERA
+                    print("On track")
+                    pi.set_servo_pulsewidth(steerPWM, 1450) ## center wheels (probs needs adjusting)
+
+                if cx <= 1100:
+                    print("Turn Right")
+                    pi.set_servo_pulsewidth(steerPWM, 1700) #turn wheels right (probs needs adjusting)
+                cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
+
+        cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
+        cv2.imshow("Mask", mask)
+        cv2.imshow("Grame", frame)
+        cv2.imshow("Frame", frame)
+        if cv2.waitKey(1) & 0xff == ord('q'):  # 1 is the time in ms
+            break
+
+tmain = threading.Thread(target=main)
+#tcontrol = threading.Thread(target=control)
+#tvideo = threading.Thread(target=video)
 #tvideo.start()
-tcontrol.start()
-#trecord.start()
+#tcontrol.start()
 
 '''
 Take video data -> detect line + obstacles + end -> follow line + avoid obstacles + stop at end
 '''
+
+#cap = cv2.VideoCapture('vid1.mp4')
+cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream') #For live video
+cap.set(3, 160)
+cap.set(4, 120)
+
+
+cap.release()
+cv2.destroyAllWindows()
