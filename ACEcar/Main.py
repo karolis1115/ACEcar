@@ -1,4 +1,3 @@
-from ast import While
 import cv2
 import pigpio
 import keyboard
@@ -17,6 +16,10 @@ pi.set_mode(driveDirrection, pigpio.OUTPUT)
 pi.set_mode(drivePWM, pigpio.OUTPUT)
 
 ########################MAIN##############################
+
+'''
+Take video data -> detect line + obstacles + end -> follow line + avoid obstacles + stop at end
+'''
 
 def video():
     cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
@@ -58,8 +61,14 @@ def control():
 
 
 def main():
-    while True:
 
+    #cap = cv2.VideoCapture('vid1.mp4')
+    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream') #For live video
+    cap.set(3, 160)
+    cap.set(4, 120)
+
+
+    while True:
         #Drive forward
         pi.set_PWM_dutycycle(driveDirrection,200)
         pi.write(drivePWM,0)
@@ -99,21 +108,12 @@ def main():
         if cv2.waitKey(1) & 0xff == ord('q'):  # 1 is the time in ms
             break
 
+    cap.release()
+    cv2.destroyAllWindows()
+
 tmain = threading.Thread(target=main)
+tmain.start()
 #tcontrol = threading.Thread(target=control)
 #tvideo = threading.Thread(target=video)
 #tvideo.start()
 #tcontrol.start()
-
-'''
-Take video data -> detect line + obstacles + end -> follow line + avoid obstacles + stop at end
-'''
-
-#cap = cv2.VideoCapture('vid1.mp4')
-cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream') #For live video
-cap.set(3, 160)
-cap.set(4, 120)
-
-
-cap.release()
-cv2.destroyAllWindows()
