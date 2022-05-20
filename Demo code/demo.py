@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 
-#HELLO EVERYONE
-cap = cv2.VideoCapture('vid1.mp4')
+
+#cap = cv2.VideoCapture('vid1.mp4')
+cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream') #For live video
 cap.set(3, 160)
 cap.set(4, 120)
 
@@ -13,7 +14,6 @@ while True:
     low_b = np.uint8([255, 255, 255])  # color of background
 
     high_b = np.uint8([80, 80, 150])
-
     mask = cv2.inRange(frame, high_b, low_b)
 
     contours, hierarchy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
