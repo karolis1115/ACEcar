@@ -22,8 +22,8 @@ def video():
     cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')
     while True:
         # Opens capture source which is simply a url to the video stream
-        frame = cap.read()
-        if not frame:
+        Ret,frame = cap.read()
+        if not Ret:
             print("no valid frame")
             break
         # show the video output
