@@ -35,11 +35,10 @@ drivePWM = 12
 INA = 5
 INB = 6
 
-#drive power
-Power = 100
-
-#pi = pigpio.pi('acecar.local')
-pi = pigpio.pi('raspberrypi.local')
+#drive power (0-255)
+Power = 200
+pi = pigpio.pi('acecar.local')
+#pi = pigpio.pi('raspberrypi.local')
 
 pi.set_mode(INA, pigpio.OUTPUT)
 pi.set_mode(INB, pigpio.OUTPUT)
@@ -51,7 +50,13 @@ pi.set_mode(steerPWM, pigpio.OUTPUT)
 
 def control():
     while True:
-        if keyboard.is_pressed('w'):
+        if keyboard.is_pressed('q'):
+                pi.set_PWM_dutycycle(drivePWM, 0)
+                pi.write(INA, 0)
+                pi.write(INB, 0)
+                pi.set_servo_pulsewidth(steerPWM, 1350)
+                break
+        elif keyboard.is_pressed('w'):
             pi.set_PWM_dutycycle(drivePWM, Power) # int is power (from 0-255)
             pi.write(INA, 1)
             pi.write(INB, 0)
@@ -77,8 +82,8 @@ def main():
     global trg
     trg = 0
 
-    #cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
-    cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
+    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
+    #cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
 
 
     low_b = np.uint8([255, 255, 255])  # color of background
@@ -149,12 +154,12 @@ def camride():
 
 
 ########Detection#######
-#tmain = threading.Thread(target=main)
-#tmain.start()
+tmain = threading.Thread(target=main)
+tmain.start()
 
 #######Control/Steering######
-#tcamride = threading.Thread(target=camride)
-#tcamride.start()
+tcamride = threading.Thread(target=camride)
+tcamride.start()
 
 
 ##Keyboard Control/testing####
