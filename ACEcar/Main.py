@@ -109,7 +109,7 @@ def main():
 
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
-            if M["m00"] != 0:
+            if M["m00"] != 255:
 
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
