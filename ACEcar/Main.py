@@ -99,7 +99,12 @@ def main():
 
         # find the contours of the line
         mask = cv2.inRange(frame, high_b, low_b)
-        contours, hierachy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
+        kernel = np.ones((5, 5), np.uint8)  # kernel for erosion and dilation
+        mask = cv2.erode(mask, kernel, iterations=5)  # erode to remove noise
+        # dilate to fill in the gaps
+        mask = cv2.dilate(mask, kernel, iterations=9)
+        # find the contours chenaged from NONE to SIMPLE can check the number between -1 and 1
+        contours, hierachy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) > 255:  # original was >0 changed for >255
 
             c = max(contours, key=cv2.contourArea)
