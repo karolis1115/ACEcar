@@ -35,7 +35,7 @@ drivePWM = 12
 INA = 5
 INB = 6
 
-#drive power (0-255)
+# drive power (0-255)
 Power = 200
 pi = pigpio.pi('acecar.local')
 #pi = pigpio.pi('raspberrypi.local')
@@ -51,18 +51,18 @@ pi.set_mode(steerPWM, pigpio.OUTPUT)
 def control():
     while True:
         if keyboard.is_pressed('q'):
-                pi.set_PWM_dutycycle(drivePWM, 0)
-                pi.write(INA, 0)
-                pi.write(INB, 0)
-                pi.set_servo_pulsewidth(steerPWM, 1350)
-                break
+            pi.set_PWM_dutycycle(drivePWM, 0)
+            pi.write(INA, 0)
+            pi.write(INB, 0)
+            pi.set_servo_pulsewidth(steerPWM, 1350)
+            break
         elif keyboard.is_pressed('w'):
-            pi.set_PWM_dutycycle(drivePWM, Power) # int is power (from 0-255)
+            pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
             pi.write(INA, 1)
             pi.write(INB, 0)
 
         elif keyboard.is_pressed('s'):
-            pi.set_PWM_dutycycle(drivePWM, Power) # int is power (from 0-255)
+            pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
             pi.write(INA, 0)
             pi.write(INB, 1)
 
@@ -78,28 +78,29 @@ def control():
             pi.write(INB, 0)
             pi.set_servo_pulsewidth(steerPWM, 1350)
 
+
 def main():
     global trg
     trg = 0
 
-    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
-    #cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
-
+    cap = cv2.VideoCapture(
+        'http://acecar.local:8080/?action=stream')  # For live video
+    # cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
 
     low_b = np.uint8([255, 255, 255])  # color of background
-    high_b = np.uint8([1, 155, 0])
-
+    high_b = np.uint8([80, 80, 150])  # 80, 80, 150 seems good for the track
+    kernel = np.ones((5, 5), np.uint8)
     while True:
 
-        ##read the frames and store them in the frame variable
-        Ret, frame =cap.read()
-        #cut off a part of the frame to not show too much
+        # read the frames and store them in the frame variable
+        Ret, frame = cap.read()
+        # cut off a part of the frame to not show too much
         frame = frame[150:330, 5:500]
 
-        #find the contours of the line
+        # find the contours of the line
         mask = cv2.inRange(frame, high_b, low_b)
         contours, hierachy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
-        if len(contours) > 0:
+        if len(contours) > 255:  # original was >0 changed for >255
 
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
@@ -111,11 +112,11 @@ def main():
                 #print("CX: " + str(cx) + " CY:" + str(cy))
                 cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
 
-
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
         cv2.imshow("Mask", mask)
         cv2.imshow("Frame", frame)
-        if cv2.waitKey(1) & 0xff == ord('q'): #press q to quit (cv2.waitKey() needs to 1)
+        # press q to quit (cv2.waitKey() needs to 1)
+        if cv2.waitKey(1) & 0xff == ord('q'):
 
             cap.release()
             cv2.destroyAllWindows()
@@ -123,8 +124,8 @@ def main():
 
 
 def camride():
-    #Drive forward
-    pi.set_PWM_dutycycle(drivePWM, Power) # int is power (from 0-255)
+    # Drive forward
+    pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
     pi.write(INA, 1)
     pi.write(INB, 0)
 
@@ -136,21 +137,18 @@ def camride():
             pi.write(INB, 0)
             pi.set_servo_pulsewidth(steerPWM, 1350)
             break
-#update the turning sensitivity even more  - first check with track
+# update the turning sensitivity even more  - first check with track
         if trg <= 200:
             print("Turn Left")
             pi.set_servo_pulsewidth(steerPWM, 1150)
 
         if trg > 200 and trg < 300:
             print("On track")
-            pi.set_servo_pulsewidth(steerPWM, 1350)
+            pi.set_servo_pulsewidth(steerPWM, 1450)
 
         if trg >= 300:
             print("Turn Right")
             pi.set_servo_pulsewidth(steerPWM, 1550)
-
-
-
 
 
 ########Detection#######
@@ -164,4 +162,4 @@ tcamride.start()
 
 ##Keyboard Control/testing####
 #tcontrol = threading.Thread(target=control)
-#tcontrol.start()
+# tcontrol.start()
