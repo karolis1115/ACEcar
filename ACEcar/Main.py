@@ -1,3 +1,4 @@
+from re import T
 import cv2
 import pigpio
 import keyboard
@@ -48,37 +49,6 @@ pi.set_mode(steerPWM, pigpio.OUTPUT)
 
 ########################MAIN##############################
 
-def control():
-    while True:
-        if keyboard.is_pressed('q'):
-            pi.set_PWM_dutycycle(drivePWM, 0)
-            pi.write(INA, 0)
-            pi.write(INB, 0)
-            pi.set_servo_pulsewidth(steerPWM, 1350)
-            break
-        elif keyboard.is_pressed('w'):
-            pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
-            pi.write(INA, 1)
-            pi.write(INB, 0)
-
-        elif keyboard.is_pressed('s'):
-            pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
-            pi.write(INA, 0)
-            pi.write(INB, 1)
-
-        elif keyboard.is_pressed('a'):
-            pi.set_servo_pulsewidth(steerPWM, 1150)
-
-        elif keyboard.is_pressed('d'):
-            pi.set_servo_pulsewidth(steerPWM, 1550)
-
-        else:
-            pi.set_PWM_dutycycle(drivePWM, 0)
-            pi.write(INA, 0)
-            pi.write(INB, 0)
-            pi.set_servo_pulsewidth(steerPWM, 1350)
-
-
 def main():
     global trg
     trg = 0
@@ -87,7 +57,7 @@ def main():
     # cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
 
     low_b = np.uint8([255, 255, 255])  # color of background
-    high_b = np.uint8([70, 70,130])  # 80, 80, 150 seems good for the track
+    high_b = np.uint8([5, 5,30])  # 80, 80, 150 seems good for the track
     kernel = np.ones((5, 5), np.uint8)
     while True:
 
@@ -127,32 +97,30 @@ def main():
             cv2.destroyAllWindows()
             break
 
-
 def camride():
     # Drive forward
     pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
     pi.write(INA, 0)
     pi.write(INB, 1)
-
     while True:
-        print(trg)
         if keyboard.is_pressed('q'):
             pi.set_PWM_dutycycle(drivePWM, 0)
             pi.write(INA, 0)
             pi.write(INB, 0)
-            pi.set_servo_pulsewidth(steerPWM, 1350)
+            pi.set_PWM_dutycycle(drivePWM, 0)
+            pi.set_servo_pulsewidth(steerPWM, 1450)
             break
 # update the turning sensitivity even more  - first check with track
-        if trg <= 200:
-            print("Turn Left")
-            pi.set_servo_pulsewidth(steerPWM, 1700)
+        if trg < 50:
+            print("CX: " + str(trg) + " L")
+            pi.set_servo_pulsewidth(steerPWM, 1650)
 
-        if trg > 200 and trg < 300:
-            print("On track")
+        if trg > 50 and trg < 300:
+            print("CX: " + str(trg) + " C")
             pi.set_servo_pulsewidth(steerPWM, 1450)
 
-        if trg >= 300:
-            print("Turn Right")
+        if trg > 300:
+            print("CX: " + str(trg) + " R")
             pi.set_servo_pulsewidth(steerPWM, 1150)
 
 
