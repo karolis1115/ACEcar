@@ -36,7 +36,7 @@ INA = 5
 INB = 6
 
 # drive power (0-255)
-Power = 200
+Power = 25
 pi = pigpio.pi('acecar.local')
 #pi = pigpio.pi('raspberrypi.local')
 
@@ -83,12 +83,11 @@ def main():
     global trg
     trg = 0
 
-    cap = cv2.VideoCapture(
-        'http://acecar.local:8080/?action=stream')  # For live video
+    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
     # cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
 
     low_b = np.uint8([255, 255, 255])  # color of background
-    high_b = np.uint8([80, 80, 150])  # 80, 80, 150 seems good for the track
+    high_b = np.uint8([70, 70,130])  # 80, 80, 150 seems good for the track
     kernel = np.ones((5, 5), np.uint8)
     while True:
 
@@ -105,12 +104,12 @@ def main():
         mask = cv2.dilate(mask, kernel, iterations=9)
         # find the contours chenaged from NONE to SIMPLE can check the number between -1 and 1
         contours, hierachy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_SIMPLE)
-        if len(contours) > 255:  # original was >0 changed for >255
+        if len(contours) > 0:  # original was >0 changed for >255
 
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
             # changed !=0 to !=255
-            if M["m00"] != 255:
+            if M["m00"] != 0:
 
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
@@ -132,8 +131,8 @@ def main():
 def camride():
     # Drive forward
     pi.set_PWM_dutycycle(drivePWM, Power)  # int is power (from 0-255)
-    pi.write(INA, 1)
-    pi.write(INB, 0)
+    pi.write(INA, 0)
+    pi.write(INB, 1)
 
     while True:
         print(trg)
@@ -146,7 +145,7 @@ def camride():
 # update the turning sensitivity even more  - first check with track
         if trg <= 200:
             print("Turn Left")
-            pi.set_servo_pulsewidth(steerPWM, 1150)
+            pi.set_servo_pulsewidth(steerPWM, 1700)
 
         if trg > 200 and trg < 300:
             print("On track")
@@ -154,7 +153,7 @@ def camride():
 
         if trg >= 300:
             print("Turn Right")
-            pi.set_servo_pulsewidth(steerPWM, 1550)
+            pi.set_servo_pulsewidth(steerPWM, 1150)
 
 
 ########Detection#######
