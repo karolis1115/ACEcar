@@ -1,4 +1,3 @@
-from re import T
 import cv2
 import pigpio
 import keyboard
@@ -49,15 +48,17 @@ pi.set_mode(steerPWM, pigpio.OUTPUT)
 
 ########################MAIN##############################
 
+
 def main():
     global trg
     trg = 0
 
-    cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
+    # cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
     # cap = cv2.VideoCapture('http://raspberrypi.local:8080/?action=stream')  # For live video
+    cap = cv2.VideoCapture("C:/users/karol/Desktop/end.jpg")
 
     low_b = np.uint8([255, 255, 255])  # color of background
-    high_b = np.uint8([5, 5,30])  # 80, 80, 150 seems good for the track
+    high_b = np.uint8([5, 5, 30])  # 80, 80, 150 seems good for the track
     kernel = np.ones((5, 5), np.uint8)
     while True:
 
@@ -75,27 +76,26 @@ def main():
         # find the contours chenaged from NONE to SIMPLE can check the number between -1 and 1
         contours, hierachy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) > 0:  # original was >0 changed for >255
-
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
-            # changed !=0 to !=255
             if M["m00"] != 0:
 
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
+                end = cy
                 trg = cx
-                #print("CX: " + str(cx) + " CY:" + str(cy))
                 cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
 
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
         cv2.imshow("Mask", mask)
         cv2.imshow("Frame", frame)
+        print(end)
         # press q to quit (cv2.waitKey() needs to 1)
-        if cv2.waitKey(1) & 0xff == ord('q'):
-
+        if cv2.waitKey(1) & 0xff == ord('q') or end > 120 and end < 130:
             cap.release()
             cv2.destroyAllWindows()
             break
+
 
 def camride():
     # Drive forward
