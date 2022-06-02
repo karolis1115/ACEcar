@@ -4,7 +4,7 @@ import keyboard
 import threading
 import time
 import numpy as np
-# print(cv2.getBuildInformation())
+# print(cv2.getBuildInformatioqn())
 
 '''
 pin config for final car
@@ -36,31 +36,31 @@ INA = 5
 INB = 6
 
 # drive power (0-255)
-Power = 25
+Power = 20
+
+
+
 
 ########################MAIN##############################
 
-def obav():
-    global obx
-    global oby
-    obx =0
-    oby =0
+#cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
+tcap = cv2.VideoCapture("C:/track.avi") #track detection video source
+ecap = cv2.VideoCapture("C:/track.avi") #end detection video source
+ocap = cv2.VideoCapture("C:/track.avi") #obstacle detection source
 
-    # cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
-    cap = cv2.VideoCapture("C:/obs.avi")
+def obstacle_detection():
+    global avoid
+    avoid = False
 
-    
     #obstacle color range
-    low_b = np.uint8([5, 255, 255])
-    high_b = np.uint8([0,14, 0])
+    low_b = np.uint8([140, 200, 180])
+    high_b = np.uint8([0,120, 80])
 
     kernel = np.ones((5, 5), np.uint8) 
     while True:
-
+        Ret, frame = ocap.read()
         # read the frames and store them in the frame variable
-        Ret, frame = cap.read()
         # cut off a part of the frame to not show too much
-        frame = frame[150:330, 5:500]
 
         # find the contours of the line
         mask = cv2.inRange(frame, high_b, low_b)
@@ -80,6 +80,9 @@ def obav():
                 oby = int(M['m01']/M['m00'])
                 # global value of cx
 
+                if oby > 200 and oby < 300:
+                    avoid = True
+                    break
                 # around 30 should be a sufficient vlaue to start driving backwards
                 print(obx," ", oby)
                 # make a cirlce at the center of the contour(x,y)
@@ -88,38 +91,49 @@ def obav():
         # Draw the cotour of the line
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
         # display the views
-        cv2.imshow("Mask", mask)
-        cv2.imshow("Frame", frame)
+        #cv2.imshow("ObstacleMask", mask)
+        cv2.imshow("ObstacleFrame",frame)
         # waits for q key to be pressed or for the CY value to be in range
-        if cv2.waitKey(0) & 0xff == ord('q'):
-            #or cy> 120 and cy < 130
-            cap.release()
-            cv2.destroyAllWindows()
-            break
+        cv2.waitKey(1)
 
-def main():
-    global px
-    global py
-    px =0
-    py =0
+def end_detection():
+    global end_trigger
+    end_trigger = False
 
-    # cap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  # For live video
-    cap = cv2.VideoCapture("C:/obs.avi")
+    while True:
+        Ret, frame = ecap.read()
+        gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        thresh_img = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
+        cnts = cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+        for cnt in cnts:
+            approx = cv2.contourArea(cnt)
+            #print(approx)
+            if approx >= 55000.0 and approx < 60000.0 and len(cnts) == 1: 
+                end_trigger = True
+
+        cv2.imshow('endMask',thresh_img)
+        cv2.waitKey(1) 
+        
+def track_detection():
+    global cx
+    cx =0
+
+    #cap = cv2.VideoCapture("C:/obs.avi")
     #line color ranges
-    low_b = np.uint8([255, 255, 255]) 
-    high_b = np.uint8([5, 5, 30])
-    kernel = np.ones((5, 5), np.uint8)
+    high_b = np.uint8([255, 255, 255])
+    low_b = np.uint8([40, 40, 80]) #works pretty well with led 
+    #kernel = np.ones((6, 6), np.uint8)
     while True:
 
         # read the frames and store them in the frame variable
-        Ret, frame = cap.read()
+        Ret, frame = tcap.read()
         # cut off a part of the frame to not show too much
-        frame = frame[150:330, 5:500]
-
+        frame = frame[150:360, 0:480]
         # find the contours of the line
-        mask = cv2.inRange(frame, high_b, low_b)
-        kernel = np.ones((5, 5), np.uint8)  # kernel for erosion and dilation
+        mask = cv2.inRange(frame, low_b, high_b)
+        kernel = np.ones((6, 6), np.uint8)  # kernel for erosion and dilation
         mask = cv2.erode(mask, kernel, iterations=5)  # erode to remove noise
         # dilate to fill in the gaps
         mask = cv2.dilate(mask, kernel, iterations=9)
@@ -130,78 +144,83 @@ def main():
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
             if M["m00"] != 0:
-
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
-                # global value of cx
-                px = cx
-                # 10 should be a sufficient vlaue to start driving backwards
-                # gotta make sure the end condition isn't met before it's too late
-                py = cy
-                print(cx," ", cy)
-                # make a cirlce at the center of the contour(x,y)
+                #print(cx," ", cy)
+
+                #make a cirlce at the center of the contour(x,y)
                 cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
+            
 
         # Draw the cotour of the line
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
         # display the views
-        cv2.imshow("Mask", mask)
-        cv2.imshow("Frame", frame)
-        # waits for q key to be pressed or for the CY value to be in range
-        if cv2.waitKey(0) & 0xff == ord('q') or cy> 120 and cy < 130:
-
-            cap.release()
+        cv2.imshow("TrackMast", mask)
+        cv2.imshow("Outline", frame)
+        if cv2.waitKey(1) & 0xff == ord('q') or end_trigger == True:
+            ecap.release()
+            ocap.release()
+            time.sleep(0.5) # for some reason ecap has to close first or it wont exit cleanly
             cv2.destroyAllWindows()
             break
-
-
-def camride():
+        
+def control():
     pi = pigpio.pi('acecar.local')
-    #pi = pigpio.pi('raspberrypi.local')
 
     pi.set_mode(INA, pigpio.OUTPUT)
     pi.set_mode(INB, pigpio.OUTPUT)
     pi.set_mode(drivePWM, pigpio.OUTPUT)
     pi.set_mode(steerPWM, pigpio.OUTPUT)
+
     # Drive forward
     pi.set_PWM_dutycycle(drivePWM, Power)  # Power is PWM (from 0-255)
     pi.write(INA, 0)
     pi.write(INB, 1)
     while True:
-        if keyboard.is_pressed('q'):
+        if keyboard.is_pressed('q') or end_trigger == True:
+            pi.set_servo_pulsewidth(steerPWM, 1450)
+            pi.write(INA, 1)
+            pi.write(INB, 1)
+            pi.set_PWM_dutycycle(drivePWM, 255)
+            time.sleep(1)
             pi.set_PWM_dutycycle(drivePWM, 0)
             pi.write(INA, 0)
             pi.write(INB, 0)
-            pi.set_PWM_dutycycle(drivePWM, 0)
-            pi.set_servo_pulsewidth(steerPWM, 1450)
+            ecap.release()
+            tcap.release()
+            ocap.release()
+            time.sleep(0.5) # for some reason ecap has to close first or it wont exit cleanly
+            cv2.destroyAllWindows()
             break
-
-        if px < 50:
-            print("CX: " + px + " L")
+        
+        
+        if cx < 200:
+            print("CX: " + str(cx) + " L")
             pi.set_servo_pulsewidth(steerPWM, 1650)
 
-        if pz> 50 and px < 300:
-            print("CX: " + px + " C")
+        if cx> 200 and cx < 300:
+            print("CX: " + str(cx) + " C")
             pi.set_servo_pulsewidth(steerPWM, 1450)
 
-        if px > 300:
-            print("CX: " + px + " R")
+        if cx > 300:
+            print("CX: " + str(cx) + " R")
             pi.set_servo_pulsewidth(steerPWM, 1150)
 
+            
 
-########Detection#######
-#tmain = threading.Thread(target=main)
-#tmain.start()
+
+########Track detection#######
+#t_trackdetection = threading.Thread(target=track_detection)
+#t_trackdetection.start()
+
+#######End detection#######
+#t_enddetection = threading.Thread(target=end_detection)
+#t_enddetection.start()
+
+#########Obstacle detection#######
+t_obstacledetection = threading.Thread(target=obstacle_detection)
+t_obstacledetection.start()
 
 #######Control/Steering######
-#tcamride = threading.Thread(target=camride)
-#tcamride.start()
-
-#######Obstacle avoidance#########
-tobav = threading.Thread(target=obav)
-tobav.start()
-
-
-##Keyboard Control/testing####
-#tcontrol = threading.Thread(target=control)
-# tcontrol.start()
+#t_control = threading.Thread(target=control)
+#t_control.start()
