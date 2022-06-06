@@ -1,4 +1,4 @@
-﻿# ACEcar
+# ACEcar
 Saxion university of applied sciences Project system 2022 ACEcar repo. 
 
 # Team members
@@ -22,7 +22,7 @@ To make an autonomous car that follows a line and avoids obstacles using a camer
 - Raspberry pi setup - Text files that contain commands + config strings to prepare  the raspberry pi to funtion correctly for the desired requirements
 - Raspberry pi test files - Files for testing different functions for pi side.
 
-# Raspberry pi Pin configuration
+# Raspberry Pi pin configuration
 - Monster Moto Driver
   - INA- 5
   - INB- 6
