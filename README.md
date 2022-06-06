@@ -1,5 +1,5 @@
 # ACEcar
-Saxion university of applied sciences Project system 2022 ACEcar repo. 
+Saxion University of Applied Sciences Project System 2022 ACEcar repo. 
 
 # Team members
 - Miguel Pérez Hernández: 524262
