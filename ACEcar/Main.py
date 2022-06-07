@@ -9,8 +9,8 @@ import numpy as np
 
 ########OUTPUT PINS########
 
-steerPWM = 13
-drivePWM = 12
+ServoPin = 13
+MotorPin = 12
 INA = 5
 INB = 6
 
@@ -57,6 +57,10 @@ Power = 20
 # ocap = cv2.VideoCapture('http://acecar.local:8080/?action=stream')  #For live video
 tcap = cv2.VideoCapture("C:/track.avi")  # Track detection video source
 ocap = cv2.VideoCapture("C:/track.avi")  # Obstacle detection source
+
+
+def map_range(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
 
 
 def obstacle_detection():
@@ -154,7 +158,7 @@ def track_detection():
             # Find the biggest contour
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
-            print((area := cv2.contourArea(c)))
+            #print((area := cv2.contourArea(c)))
 
             # If the contour is big enough do...
             if M["m00"] != 0:
@@ -188,67 +192,79 @@ def control():
     # Set the required pins to output
     pi.set_mode(INA, pigpio.OUTPUT)
     pi.set_mode(INB, pigpio.OUTPUT)
-    pi.set_mode(drivePWM, pigpio.OUTPUT)
-    pi.set_mode(steerPWM, pigpio.OUTPUT)
+    pi.set_mode(MotorPin, pigpio.OUTPUT)
+    pi.set_mode(ServoPin, pigpio.OUTPUT)
 
     # Drive forward
-    pi.set_PWM_dutycycle(drivePWM, Power)  # Power is PWM (from 0-255)
+    pi.set_PWM_dutycycle(MotorPin, Power)  # Power is PWM (from 0-255)
     pi.write(INA, 0)
     pi.write(INB, 1)
 
     while True:
 
         #####################STEEERING##############################
-        if cx < CX_MIN:
+
+        # Attempt to implement proportional control for steering
+        MappedVal = map_range(cx, CX_MIN, CX_MAX, SERVO_MIN, SERVO_MAX)
+        ClippedVal = np.clip(MappedVal, SERVO_MIN, SERVO_MAX)
+        pi.set_servo_pulsewidth(ServoPin, ClippedVal)
+        print("servo:", ClippedVal, " cx:", cx)
+
+        '''if cx < CX_MIN:
             #print("CX: " + str(cx) + " L")
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MAX)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MAX)
 
         if cx > CX_MIN and cx < CX_MAX:
             #print("CX: " + str(cx) + " C")
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MID)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MID)
 
         if cx > CX_MAX:
             #print("CX: " + str(cx) + " R")
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MIN)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MIN)'''
 
         #############OBSTACLE AVOIDANCE#############################
         if oby > OBY_MIN and oby < OBY_MAX:
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MID)
 
-            # Drive backwards for 3 seconds
+            # Center wheels and drive backwards for 3 seconds
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MID)
             pi.write(INA, 1)
             pi.write(INB, 0)
             time.sleep(3)
 
             # Turn right and drive forward for 3 seconds
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MIN)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MIN)
             pi.write(INA, 0)
             pi.write(INB, 1)
             time.sleep(1)
             # Turn left and continue with program
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MAX)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MAX)
 
         ###########################END EXECUTION##############################
         if keyboard.is_pressed('q') or area >= STOP_MIN and area <= STOP_MAX:
 
             # Center the wheels and drive backards at 40 pwm for 0.2 seconds
-            pi.set_servo_pulsewidth(steerPWM, SERVO_MID)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MID)
             pi.write(INA, 1)
             pi.write(INB, 0)
-            pi.set_PWM_dutycycle(drivePWM, 40)
+            pi.set_PWM_dutycycle(MotorPin, 40)
             time.sleep(0.2)
 
             # Brake the car for 0.2 seconds
-            pi.set_PWM_dutycycle(drivePWM, 255)
+            pi.set_PWM_dutycycle(MotorPin, 255)
             pi.write(INA, 1)
             pi.write(INB, 1)
             time.sleep(0.2)
 
             # Set all outputs to 0
-            pi.set_PWM_dutycycle(drivePWM, 0)
+            pi.set_PWM_dutycycle(MotorPin, 0)
             pi.write(INA, 0)
             pi.write(INB, 0)
             pi.stop()
+
+            # Close the video sources and exit the loop
+            ocap.relese()
+            tcap.release()
+            cv2.destroyAllWindows()
             break
 
 #############################THREADS############################################
@@ -264,4 +280,4 @@ t_obstacledetection.start()
 
 #######CONTROL/STEERING######
 t_control = threading.Thread(target=control)
-t_control.start()
+# t_control.start()
