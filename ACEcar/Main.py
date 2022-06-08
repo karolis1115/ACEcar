@@ -172,6 +172,7 @@ def track_detection():
         # Draw the cotour of the line
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
 
+        
         # Display the views
         cv2.imshow("TrackMask", mask)
         cv2.imshow("Outline", frame)
@@ -223,7 +224,7 @@ def control():
             pi.set_servo_pulsewidth(ServoPin, SERVO_MIN)'''
 
         #############OBSTACLE AVOIDANCE#############################
-        if oby > OBY_MIN and oby < OBY_MAX:
+        '''if oby > OBY_MIN and oby < OBY_MAX:
 
             # Center wheels and drive backwards for 3 seconds
             pi.set_servo_pulsewidth(ServoPin, SERVO_MID)
@@ -237,7 +238,7 @@ def control():
             pi.write(INB, 1)
             time.sleep(1)
             # Turn left and continue with program
-            pi.set_servo_pulsewidth(ServoPin, SERVO_MAX)
+            pi.set_servo_pulsewidth(ServoPin, SERVO_MAX)'''
 
         ###########################END EXECUTION##############################
         if keyboard.is_pressed('q') or area >= STOP_MIN and area <= STOP_MAX:
@@ -275,8 +276,8 @@ t_trackdetection = threading.Thread(target=track_detection)
 t_trackdetection.start()
 
 #########OBSTACLE DETECTION#######
-t_obstacledetection = threading.Thread(target=obstacle_detection)
-t_obstacledetection.start()
+#t_obstacledetection = threading.Thread(target=obstacle_detection)
+#t_obstacledetection.start()
 
 #######CONTROL/STEERING######
 t_control = threading.Thread(target=control)
